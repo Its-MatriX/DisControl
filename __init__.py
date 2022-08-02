@@ -1,148 +1,41 @@
-request_bad = [403, 404, 401, 429]
+# DisControl by MatriX#6770, and Отчим Анала#6840
 
-import requests
+# DisControl - библиотека для управления аккаунтом Discord по его токену
+# с открытым исходным кодом.
 
+# * pip install discontrol
 
-class errors:
+# !!! ПРИ ПОМОЩИ ЭТОЙ БИБЛИОТЕКИ НЕЛЬЗЯ УПРАВЛЯТЬ БОТАМИ !!!
+# !!! ОНА ПОДДЕРЖИВАЕТ ТОЛЬКО АККАУНТЫ !!!
 
-    class FailedToRunClient(Exception):
-        pass
+# !!! THIS LIBRARY CANNOT CONTROL BOTS !!!
+# !!! SUPPORTS USER ACCOUNTS ONLY !!!
 
-    class FailedToSendMessage(Exception):
-        pass
+# Библиотека была написана разными разработчиками, поэтому стиль кода может отличаться.
+# The library was written by different developers, so the style of the code may vary.
 
-    class FailedToDeleteMessage(Exception):
-        pass
+# * Russian Library.
 
-    class FailedToEditMessage(Exception):
-        pass
+# Во время разработки было сказано много великих слов. Вот часть из них:
 
-    class InvalidStatusIcon(Exception):
-        pass
+# ? "Да норм все" - Великие слова (C) Its-MatriX
+# * "GlobalUser это не GuildUser" - Великие слова (C) Отчим Анала#6840
+# * "Наин Наин Растрелять Хохлов,евреев !!!" - Великие слова (C) Отчим Анала#6840
+# * "Спиздим Спиженное" - Великие слова (C) Отчим Анала#6840
+# ? "Заебато, НЕРЕАЛЬНО" - Великие слова (C) Its-MatriX
+# ? "Я чё ебу что-ли? И ебать тебя на должно" - Великие слова (C) Its-MatriX
+# * "ОПЯТЬ СУЧКА АААААААААА" - Великие слова (C) Отчим Анала#6840
+# * "has joined the Live Share session" - Великие слова (C) Отчим Анала#6840
 
-    class FailedToChangeStatusIcon(Exception):
-        pass
+# А хотя, я хз кто будет лезть в исходники, и мало кто увидит эти великие слова.
 
-    class FailedToChangeStatusText(Exception):
-        pass
-
-
-class Status:
-    online = 'online'
-    idle = 'idle'
-    dnd = 'dnd'
-    invisible = 'invisible'
-
-
-class Message:
-
-    def __init__(self, message_id, channel_id, client):
-        self.message_id = message_id
-        self.channel_id = channel_id
-        self.client = client
-
-    def edit(self, new_text):
-        Url = f'https://discord.com/api/v9/channels/{self.channel_id}/messages/{self.message_id}'
-        Headers = {'Authorization': self.client.token}
-        Json = {'content': new_text}
-
-        Request = requests.patch(Url, json=Json, headers=Headers)
-
-        if self.client.show_logs:
-            if Request.status_code in request_bad:
-                raise errors.FailedToEditMessage(
-                    f'Edit message error: {Request.status_code} - ' +
-                    Request.json()['message'], Request.status_code)
-            else:
-                print('[i] Edit message:', Request.status_code)
-
-        return 0
-
-    def delete(self):
-        Headers = {'Authorization': self.client.token}
-        Url = f'https://discord.com/api/v9/channels/{self.channel_id}/messages/{self.message_id}'
-        Request = requests.delete(Url, headers=Headers)
-
-        if self.client.show_logs:
-            if Request.status_code in request_bad:
-                raise errors.FailedToDeleteMessage(
-                    f'Delete message error: {Request.status_code} - ' +
-                    Request.json()['message'], Request.status_code)
-            else:
-                print('[i] Delete message:', Request.status_code)
-
-        return 0
-
-
-class Client:
-
-    def __init__(self, token, show_logs: bool = True):
-        self.token = token
-        self.show_logs = show_logs
-
-        Headers = {'Authorization': token}
-        TestRequest = requests.get(
-            f'https://discord.com/api/v9/users/@me/library', headers=Headers)
-
-        try:
-            error = TestRequest.json()['message']
-
-            if TestRequest.status_code in request_bad:
-                raise errors.FailedToRunClient(
-                    f'Failed to run client ({error})')
-        except:
-            pass
-
-    def send_message(self, channel_id: int, content):
-        Json = {'content': content}
-        Headers = {'Authorization': self.token}
-        Url = f'https://discord.com/api/v9/channels/{channel_id}/messages'
-
-        Request = requests.post(Url, json=Json, headers=Headers)
-
-        if self.show_logs:
-            if Request.status_code in request_bad:
-                raise errors.FailedToSendMessage(
-                    f'Send message error: {Request.status_code} - ' +
-                    Request.json()['message'], Request.status_code)
-            else:
-                print('[i] Send message:', Request.status_code)
-
-        id = Request.json()['id']
-
-        return Message(id, channel_id, self)
-
-    def set_status_icon(self, status):
-        if status not in [
-                Status.online, Status.idle, Status.dnd, Status.invisible
-        ]:
-            raise errors.InvalidStatusIcon('Invalid status icon')
-
-        Url = 'https://discord.com/api/v9/users/@me/settings'
-        Headers = {'Authorization': self.token}
-        Json = {'status': status}
-
-        Request = requests.patch(Url, headers=Headers, json=Json)
-
-        if self.show_logs:
-            if Request.status_code in request_bad:
-                raise errors.FailedToChangeStatusIcon(
-                    f'Change status icon error: {Request.status_code} - ' +
-                    Request.json()['message'], Request.status_code)
-            else:
-                print('[i] Change status icon:', Request.status_code)
-
-    def set_status_text(self, text):
-        Url = 'https://discord.com/api/v9/users/@me/settings'
-        Headers = {'Authorization': self.token}
-        Json = {'custom_status': {'text': text}}
-
-        Request = requests.patch(Url, headers=Headers, json=Json)
-
-        if self.show_logs:
-            if Request.status_code in request_bad:
-                raise errors.FailedToChangeStatusText(
-                    f'Change status text error: {Request.status_code} - ' +
-                    Request.json()['message'], Request.status_code)
-            else:
-                print('[i] Change status text:', Request.status_code)
+from discontrol.Channels import *
+from discontrol.Client import *
+from discontrol.Errors import *
+from discontrol.GlobalUser import *
+from discontrol.Guild import *
+from discontrol.GuildUser import *
+from discontrol.Http import *
+from discontrol.Message import *
+from discontrol.RequestBad import *
+from discontrol.Status import *
